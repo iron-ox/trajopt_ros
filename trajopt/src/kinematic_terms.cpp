@@ -224,15 +224,7 @@ VectorXd JointAccErrCalculator::operator()(const VectorXd& var_vals) const
   int half = static_cast<int>(var_vals.rows() / 2);
   int num_acc = half - 2;
   VectorXd vels = vel_calc(var_vals);
-
-  // v1-v0
-  VectorXd vel_diff = (vels.segment(1, num_acc) - vels.segment(0, num_acc));
-  // I'm not sure about this. We should probably use same method we use in non time version
-  // v1-v0/avg(dt1,dt0)
-  VectorXd acc =
-      2.0 * vel_diff.array() / (var_vals.segment(half + 1, num_acc) + var_vals.segment(half + 2, num_acc)).array();
-
-  return acc.array() - limit_;
+  return acc_calc(vels);
 }
 
 MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
@@ -271,15 +263,7 @@ VectorXd JointJerkErrCalculator::operator()(const VectorXd& var_vals) const
   int half = static_cast<int>(var_vals.rows() / 2);
   int num_jerk = half - 3;
   VectorXd acc = acc_calc(var_vals);
-
-  VectorXd acc_diff = acc.segment(1, num_jerk) - acc.segment(0, num_jerk);
-
-  VectorXd jerk = 3.0 * acc_diff.array() /
-                  (var_vals.segment(half + 1, num_jerk) + var_vals.segment(half + 2, num_jerk) +
-                   var_vals.segment(half + 3, num_jerk))
-                      .array();
-
-  return jerk.array() - limit_;
+  return jerk_calc(var_vals);
 }
 
 MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const

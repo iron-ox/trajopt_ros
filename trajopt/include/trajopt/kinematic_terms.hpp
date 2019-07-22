@@ -165,10 +165,21 @@ struct JointVelJacCalculator : sco::MatrixOfVector
 
 struct JointAccErrCalculator : sco::VectorOfVector
 {
+  /** @brief Velocity target */
+  double target_;
+  /** @brief Upper tolerance */
+  double upper_tol_;
+  /** @brief Lower tolerance */
+  double lower_tol_;
   JointVelErrCalculator vel_calc;
-  double limit_;
-  JointAccErrCalculator() : limit_(0.0) {}
-  JointAccErrCalculator(double limit) : limit_(limit) {}
+  JointVelErrCalculator acc_calc;
+
+  JointAccErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), acc_calc(target_, upper_tol_, lower_tol_) {}
+  JointAccErrCalculator(double target, double upper_tol, double lower_tol)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), acc_calc(target_, upper_tol_, lower_tol_)
+  {
+  }
+
   Eigen::VectorXd operator()(const Eigen::VectorXd& var_vals) const override;
 };
 
@@ -181,10 +192,21 @@ struct JointAccJacCalculator : sco::MatrixOfVector
 
 struct JointJerkErrCalculator : sco::VectorOfVector
 {
+  /** @brief Velocity target */
+  double target_;
+  /** @brief Upper tolerance */
+  double upper_tol_;
+  /** @brief Lower tolerance */
+  double lower_tol_;
   JointAccErrCalculator acc_calc;
-  double limit_;
-  JointJerkErrCalculator() : limit_(0.0) {}
-  JointJerkErrCalculator(double limit) : limit_(limit) {}
+  JointVelErrCalculator jerk_calc;
+
+  JointJerkErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), jerk_calc(target_, upper_tol_, lower_tol_) {}
+  JointJerkErrCalculator(double target, double upper_tol, double lower_tol)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), jerk_calc(target_, upper_tol_, lower_tol_)
+  {
+  }
+
   Eigen::VectorXd operator()(const Eigen::VectorXd& var_vals) const override;
 };
 
