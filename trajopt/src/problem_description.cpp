@@ -1139,7 +1139,7 @@ void JointAccTermInfo::hatch(TrajOptProb& prob)
 
   if (term_type == (TT_COST | TT_USE_TIME))
   {
-    unsigned num_accs = last_step - first_step;
+    unsigned num_accs = static_cast<unsigned>(last_step - first_step - 1);
 
     // Apply seperate cost to each joint b/c that is how the error function is currently written
     for (size_t j = 0; j < n_dof; j++)
@@ -1176,7 +1176,7 @@ void JointAccTermInfo::hatch(TrajOptProb& prob)
   }
   else if (term_type == (TT_CNT | TT_USE_TIME))
   {
-    unsigned num_accs = last_step - first_step;
+    unsigned num_accs = static_cast<unsigned>(last_step - first_step - 1);
 
     // Apply seperate cnt to each joint b/c that is how the error function is currently written
     for (size_t j = 0; j < n_dof; j++)
@@ -1327,7 +1327,7 @@ void JointJerkTermInfo::hatch(TrajOptProb& prob)
 
   if (term_type == (TT_COST | TT_USE_TIME))
   {
-    unsigned num_jerks = last_step - first_step;
+    unsigned num_jerks = static_cast<unsigned>(last_step - first_step - 2);
 
     // Apply seperate cost to each joint b/c that is how the error function is currently written
     for (size_t j = 0; j < n_dof; j++)
@@ -1364,7 +1364,7 @@ void JointJerkTermInfo::hatch(TrajOptProb& prob)
   }
   else if (term_type == (TT_CNT | TT_USE_TIME))
   {
-    unsigned num_jerks = last_step - first_step;
+    unsigned num_jerks = static_cast<unsigned>(last_step - first_step - 2);
 
     // Apply seperate cnt to each joint b/c that is how the error function is currently written
     for (size_t j = 0; j < n_dof; j++)

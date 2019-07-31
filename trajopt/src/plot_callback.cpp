@@ -39,15 +39,22 @@ void PlotCosts(const tesseract_visualization::Visualization::Ptr& plotter,
   }
 
   plotter->plotTrajectory(joint_names, getTraj(results.x, vars));
-  plotter->waitForInput();
+  //plotter->waitForInput();
 }
 
 sco::Optimizer::Callback PlotCallback(TrajOptProb& prob, const tesseract_visualization::Visualization::Ptr& plotter)
 {
   std::vector<sco::Constraint::Ptr> cnts = prob.getConstraints();
+
+  // Copy joint names and add time, if the problem uses time constraints.
+  std::vector<std::string> dimension_names = prob.GetKin()->getJointNames();
+  if (prob.GetHasTime()) {
+    dimension_names.push_back("time");
+  }
+
   return std::bind(&PlotCosts,
                    plotter,
-                   prob.GetKin()->getJointNames(),
+                   dimension_names,
                    std::ref(prob.getCosts()),
                    cnts,
                    std::ref(prob.GetVars()),

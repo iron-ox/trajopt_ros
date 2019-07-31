@@ -172,21 +172,45 @@ VectorXd CartVelErrCalculator::operator()(const VectorXd& dof_vals) const
   return out;
 }
 
-Eigen::VectorXd JointVelErrCalculator::operator()(const VectorXd& var_vals) const
+namespace
 {
-  assert(var_vals.rows() % 2 == 0);
-  // Top half of the vector are the joint values. The bottom half are the 1/dt values
-  int half = static_cast<int>(var_vals.rows() / 2);
-  int num_vels = half - 1;
+Eigen::VectorXd Diff(const VectorXd& var_vals)
+{
   // (x1-x0)*(1/dt)
-  VectorXd vel = (var_vals.segment(1, num_vels) - var_vals.segment(0, num_vels)).array() *
-                 var_vals.segment(half + 1, num_vels).array();
+  assert(var_vals.rows() % 2 == 0);
+  const int half = static_cast<int>(var_vals.rows()) / 2;
+  const int num_diff = half - 1;
+
+  const auto x2 = var_vals.segment(1, num_diff);
+  const auto x1 = var_vals.segment(0, num_diff);
+  const auto dt_inv = var_vals.segment(half + 1, num_diff);
+
+  VectorXd result(num_diff * 2);
+  result.topRows(num_diff) = (x2 - x1).array() * dt_inv.array();
+  result.bottomRows(num_diff) = dt_inv;
+
+  return result;
+}
+
+Eigen::VectorXd Err(const VectorXd& vals_and_dts, double target, double upper_tol, double lower_tol)
+{
+  assert(vals_and_dts.rows() % 2 == 0);
+  const int half = static_cast<int>(vals_and_dts.rows()) / 2;
+  const auto vals = vals_and_dts.topRows(half);
 
   // Note that for equality terms tols are 0, so error is effectively doubled
-  VectorXd result(vel.rows() * 2);
-  result.topRows(vel.rows()) = -(upper_tol_ - (vel.array() - target_));
-  result.bottomRows(vel.rows()) = lower_tol_ - (vel.array() - target_);
+  VectorXd result(vals.rows() * 2);
+  result.topRows(vals.rows()) = -(upper_tol - (vals.array() - target));
+  result.bottomRows(vals.rows()) = lower_tol - (vals.array() - target);
+
   return result;
+}
+}  // namespace
+
+Eigen::VectorXd JointVelErrCalculator::operator()(const VectorXd& var_vals) const
+{
+  const VectorXd vel = Diff(var_vals);
+  return Err(vel, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointVelJacCalculator::operator()(const VectorXd& var_vals) const
@@ -220,11 +244,9 @@ MatrixXd JointVelJacCalculator::operator()(const VectorXd& var_vals) const
 // TODO: convert to (1/dt) and use central finite difference method
 VectorXd JointAccErrCalculator::operator()(const VectorXd& var_vals) const
 {
-  assert(var_vals.rows() % 2 == 0);
-  int half = static_cast<int>(var_vals.rows() / 2);
-  int num_acc = half - 2;
-  VectorXd vels = vel_calc(var_vals);
-  return acc_calc(vels);
+  const VectorXd vel = Diff(var_vals);
+  const VectorXd acc = Diff(vel);
+  return Err(acc, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
@@ -259,11 +281,10 @@ MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
 // TODO: convert to (1/dt) and use central finite difference method
 VectorXd JointJerkErrCalculator::operator()(const VectorXd& var_vals) const
 {
-  assert(var_vals.rows() % 2 == 0);
-  int half = static_cast<int>(var_vals.rows() / 2);
-  int num_jerk = half - 3;
-  VectorXd acc = acc_calc(var_vals);
-  return jerk_calc(var_vals);
+  const VectorXd vel = Diff(var_vals);
+  const VectorXd acc = Diff(vel);
+  const VectorXd jerk = Diff(acc);
+  return Err(jerk, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const

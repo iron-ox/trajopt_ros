@@ -171,12 +171,10 @@ struct JointAccErrCalculator : sco::VectorOfVector
   double upper_tol_;
   /** @brief Lower tolerance */
   double lower_tol_;
-  JointVelErrCalculator vel_calc;
-  JointVelErrCalculator acc_calc;
 
-  JointAccErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), acc_calc(target_, upper_tol_, lower_tol_) {}
+  JointAccErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0) {}
   JointAccErrCalculator(double target, double upper_tol, double lower_tol)
-    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), acc_calc(target_, upper_tol_, lower_tol_)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol)
   {
   }
 
@@ -198,12 +196,10 @@ struct JointJerkErrCalculator : sco::VectorOfVector
   double upper_tol_;
   /** @brief Lower tolerance */
   double lower_tol_;
-  JointAccErrCalculator acc_calc;
-  JointVelErrCalculator jerk_calc;
 
-  JointJerkErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), jerk_calc(target_, upper_tol_, lower_tol_) {}
+  JointJerkErrCalculator() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0) {}
   JointJerkErrCalculator(double target, double upper_tol, double lower_tol)
-    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), jerk_calc(target_, upper_tol_, lower_tol_)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol)
   {
   }
 
