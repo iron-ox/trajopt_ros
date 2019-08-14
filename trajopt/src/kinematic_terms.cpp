@@ -1,4 +1,4 @@
-#include <trajopt_utils/macros.h>
+#(include <trajopt_utils/macros.h>
 TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <Eigen/Geometry>
 #include <boost/format.hpp>
@@ -216,9 +216,9 @@ Eigen::VectorXd JointVelErrCalculator::operator()(const VectorXd& var_vals) cons
 MatrixXd JointVelJacCalculator::operator()(const VectorXd& var_vals) const
 {
   // var_vals = (theta_t1, theta_t2, theta_t3 ... 1/dt_1, 1/dt_2, 1/dt_3 ...)
-  int num_vals = static_cast<int>(var_vals.rows());
-  int half = num_vals / 2;
-  int num_vels = half - 1;
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int half = num_vals / 2;
+  const int num_vels = half - 1;
   MatrixXd jac = MatrixXd::Zero(num_vels * 2, num_vals);
 
   for (int i = 0; i < num_vels; i++)
@@ -251,28 +251,24 @@ VectorXd JointAccErrCalculator::operator()(const VectorXd& var_vals) const
 
 MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
 {
-  int num_vals = static_cast<int>(var_vals.rows());
-  int half = num_vals / 2;
-  MatrixXd jac = MatrixXd::Zero(half - 2, num_vals);
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int half = num_vals / 2;
+  const int num_accs = half - 2;
+  MatrixXd jac = MatrixXd::Zero(num_accs * 2, num_vals);
 
-  VectorXd vels = vel_calc(var_vals);
-  MatrixXd vel_jac = vel_jac_calc(var_vals);
-  for (int i = 0; i < jac.rows(); i++)
+  for (int i = 0; i < num_accs; i++)
   {
-    int dt_1_index = i + half + 1;
-    int dt_2_index = dt_1_index + 1;
-    double dt_1 = var_vals(dt_1_index);
-    double dt_2 = var_vals(dt_2_index);
-    double total_dt = dt_1 + dt_2;
+    const double dt1 = var_vals(i + half + 1);
+    const double dt2 = var_vals(i + half + 2);
+    const double x0 = var_vals(i);
+    const double x1 = var_vals(i + 1);
+    const double x2 = var_vals(i + 2);
 
-    jac(i, i) = 2.0 * (vel_jac(i + 1, i) - vel_jac(i, i)) / total_dt;
-    jac(i, i + 1) = 2.0 * (vel_jac(i + 1, i + 1) - vel_jac(i, i + 1)) / total_dt;
-    jac(i, i + 2) = 2.0 * (vel_jac(i + 1, i + 2) - vel_jac(i, i + 2)) / total_dt;
-
-    jac(i, dt_1_index) = 2.0 * ((vel_jac(i + 1, dt_1_index) - vel_jac(i, dt_1_index)) / total_dt -
-                                (vels(i + 1) - vels(i)) / sq(total_dt));
-    jac(i, dt_2_index) = 2.0 * ((vel_jac(i + 1, dt_2_index) - vel_jac(i, dt_2_index)) / total_dt -
-                                (vels(i + 1) - vels(i)) / sq(total_dt));
+    jac(i, i) = dt1 * dt2;
+    jac(i, i + 1) = -dt2 * (dt1 + dt2);
+    jac(i, i + 2) = dt2 * dt2;
+    jac(i, i + half + 1) = dt2 * (x0 - x1);
+    jac(i, i + half + 2) = dt1 * (x0 - x1) + 2 * dt2 * (x2 - x1);
   }
 
   return jac;
@@ -289,34 +285,29 @@ VectorXd JointJerkErrCalculator::operator()(const VectorXd& var_vals) const
 
 MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const
 {
-  int num_vals = static_cast<int>(var_vals.rows());
-  int half = num_vals / 2;
-  MatrixXd jac = MatrixXd::Zero(half - 3, num_vals);
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int half = num_vals / 2;
+  const int num_jerks = half-3;
+  MatrixXd jac = MatrixXd::Zero(num_jerks * 2, num_vals);
 
-  VectorXd acc = acc_calc(var_vals);
-  MatrixXd acc_jac = acc_jac_calc(var_vals);
 
-  for (int i = 0; i < jac.rows(); i++)
+  for (int i = 0; i < num_jerks; i++)
   {
-    int dt_1_index = i + half + 1;
-    int dt_2_index = dt_1_index + 1;
-    int dt_3_index = dt_2_index + 1;
-    double dt_1 = var_vals(dt_1_index);
-    double dt_2 = var_vals(dt_2_index);
-    double dt_3 = var_vals(dt_3_index);
-    double total_dt = dt_1 + dt_2 + dt_3;
+    const double dt1 = var_vals(i + half + 1);
+    const double dt2 = var_vals(i + half + 2);
+    const double dt3 = var_vals(i + half + 3);
+    const double x0 = var_vals(i);
+    const double x1 = var_vals(i + 1);
+    const double x2 = var_vals(i + 2);
+    const double x3 = var_vals(i + 3);
 
-    jac(i, i) = 3.0 * (acc_jac(i + 1, i) - acc_jac(i, i)) / total_dt;
-    jac(i, i + 1) = 3.0 * (acc_jac(i + 1, i + 1) - acc_jac(i, i + 1)) / total_dt;
-    jac(i, i + 2) = 3.0 * (acc_jac(i + 1, i + 2) - acc_jac(i, i + 2)) / total_dt;
-    jac(i, i + 3) = 3.0 * (acc_jac(i + 1, i + 3) - acc_jac(i, i + 3)) / total_dt;
-
-    jac(i, dt_1_index) =
-        3.0 * ((acc_jac(i + 1, dt_1_index) - acc_jac(i, dt_1_index)) / total_dt - (acc(i + 1) - acc(i)) / sq(total_dt));
-    jac(i, dt_2_index) =
-        3.0 * ((acc_jac(i + 1, dt_2_index) - acc_jac(i, dt_2_index)) / total_dt - (acc(i + 1) - acc(i)) / sq(total_dt));
-    jac(i, dt_3_index) =
-        3.0 * ((acc_jac(i + 1, dt_3_index) - acc_jac(i, dt_3_index)) / total_dt - (acc(i + 1) - acc(i)) / sq(total_dt));
+    jac(i, i) = -dt1 * -dt2 * -dt3;
+    jac(i, i + 1) = dt3 * (dt2 * dt3 + dt2 * (dt1 + dt2));
+    jac(i, i + 2) = -dt3 * (dt2 * dt2 + dt3 * (dt2 + dt3));
+    jac(i, i + 3) = dt3 * dt3 * dt3;
+    jac(i, i + half + 1) = dt2 * dt3 * (x1 - x0);
+    jac(i, i + half + 2) = dt3 * (dt1 * (x1 - x0) - 2 * dt2 * (x2 - x1) + dt3 * (x1 - x2));
+    jac(i, i + half + 3) = -dt2 * (-dt1 * (-x0 + x1) + dt2 * (-x1 + x2)) + dt3 * (-dt2 * (-x1 + x2) + dt3 * (-x2 + x3)) + dt3 * (-dt2 * (-x1 + x2) + 2 * dt3 * (-x2 + x3));
   }
 
   return jac;
