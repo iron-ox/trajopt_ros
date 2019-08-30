@@ -1745,7 +1745,12 @@ void TotalTimeTermInfo::hatch(TrajOptProb& prob)
     constraint_type = sco::INEQ;
   }
 
-  if (term_type & TT_COST)
+  if (!(term_type & TT_USE_TIME))
+  {
+    PRINT_AND_THROW("TotalTimeTermInfo must have TT_USE_TIME");
+  }
+
+  if ((term_type & TT_USE_TIME) && (term_type & TT_COST))
   {
     prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new TimeCostCalculator(limit)),
                                                            sco::MatrixOfVector::Ptr(new TimeCostJacCalculator()),
@@ -1754,7 +1759,7 @@ void TotalTimeTermInfo::hatch(TrajOptProb& prob)
                                                            penalty_type,
                                                            name)));
   }
-  else if (term_type & TT_CNT)
+  else if ((term_type & TT_USE_TIME) && (term_type & TT_CNT))
   {
     prob.addConstraint(
         sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new TimeCostCalculator(limit)),
