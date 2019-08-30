@@ -416,7 +416,7 @@ struct JointAccTermInfo : public TermInfo
   DEFINE_CREATE(JointAccTermInfo)
 
   /** @brief Initialize term with it's supported types */
-  JointAccTermInfo() : TermInfo(TT_COST | TT_CNT) {}
+  JointAccTermInfo() : TermInfo(TT_COST | TT_CNT | TT_USE_TIME) {}
 };
 
 /**
@@ -461,7 +461,7 @@ struct JointJerkTermInfo : public TermInfo
   DEFINE_CREATE(JointJerkTermInfo)
 
   /** @brief Initialize term with it's supported types */
-  JointJerkTermInfo() : TermInfo(TT_COST | TT_CNT) {}
+  JointJerkTermInfo() : TermInfo(TT_COST | TT_CNT | TT_USE_TIME) {}
 };
 
 /**

@@ -1,3 +1,5 @@
+#include <csignal>
+
 #pragma once
 #include <trajopt_utils/macros.h>
 TRAJOPT_IGNORE_WARNINGS_PUSH

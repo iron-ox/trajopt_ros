@@ -716,16 +716,15 @@ JointJerkEqCost::JointJerkEqCost(const VarArray& vars,
                                  int& last_step)
   : Cost("JointJerkEq"), vars_(vars), coeffs_(coeffs), targets_(targets), first_step_(first_step), last_step_(last_step)
 {
-  for (int i = first_step_; i <= last_step_ - 4; ++i)
+  for (int i = first_step_; i <= last_step_ - 3; ++i)
   {
     for (int j = 0; j < vars.cols(); ++j)
     {
       sco::AffExpr jerk;
-      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1.0 / 2.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), 0.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), -1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 4, j), 1.0 / 2.0));
+      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), -3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), 1));
 
       sco::exprDec(jerk, targets_[j]);
       // expr_ = coeff * jerk^2
@@ -768,18 +767,17 @@ JointJerkIneqCost::JointJerkIneqCost(const VarArray& vars,
   , first_step_(first_step)
   , last_step_(last_step)
 {
-  for (int i = first_step_; i <= last_step_ - 4; ++i)
+  for (int i = first_step_; i <= last_step_ - 3; ++i)
   {
     for (int j = 0; j < vars.cols(); ++j)
     {
       sco::AffExpr jerk;
       sco::AffExpr expr;
       sco::AffExpr expr_neg;
-      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1.0 / 2.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), 0.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), -1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 4, j), 1.0 / 2.0));
+      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), -3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), 1));
       sco::exprDec(jerk, targets_[j]);
 
       // Form upper limit expr = - (upper_tol-(jerk-targ))
@@ -837,16 +835,15 @@ JointJerkEqConstraint::JointJerkEqConstraint(const VarArray& vars,
   , first_step_(first_step)
   , last_step_(last_step)
 {
-  for (int i = first_step_; i <= last_step_ - 4; ++i)
+  for (int i = first_step_; i <= last_step_ - 3; ++i)
   {
     for (int j = 0; j < vars.cols(); ++j)
     {
       sco::AffExpr jerk;
-      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1.0 / 2.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), 0.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), -1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 4, j), 1.0 / 2.0));
+      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), -3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), 1));
 
       sco::exprDec(jerk, targets_[j]);  // offset to center about 0
       // expr_ = coeff * jerk - Not squared b/c QuadExpr cnt not yet supported (TODO)
@@ -893,18 +890,17 @@ JointJerkIneqConstraint::JointJerkIneqConstraint(const VarArray& vars,
   , first_step_(first_step)
   , last_step_(last_step)
 {
-  for (int i = first_step_; i <= last_step_ - 4; ++i)
+  for (int i = first_step_; i <= last_step_ - 3; ++i)
   {
     for (int j = 0; j < vars.cols(); ++j)
     {
       sco::AffExpr jerk;
       sco::AffExpr expr;
       sco::AffExpr expr_neg;
-      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1.0 / 2.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), 0.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), -1.0));
-      sco::exprInc(jerk, sco::exprMult(vars(i + 4, j), 1.0 / 2.0));
+      sco::exprInc(jerk, sco::exprMult(vars(i, j), -1));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 1, j), 3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 2, j), -3));
+      sco::exprInc(jerk, sco::exprMult(vars(i + 3, j), 1));
       sco::exprDec(jerk, targets_[j]);  // offset to center about 0
 
       // Form upper limit expr = - (upper_tol-(vel-targ))
