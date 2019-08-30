@@ -1041,25 +1041,27 @@ void JointVelTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::SQUARED,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::SQUARED,
+                                       name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" cost
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::HINGE,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::HINGE,
+                                       name + "_j" + std::to_string(j))));
       }
     }
   }
@@ -1077,25 +1079,27 @@ void JointVelTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::EQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::EQ,
+                                             name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" constraint
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::INEQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::INEQ,
+                                             name + "_j" + std::to_string(j))));
       }
     }
   }
@@ -1258,25 +1262,27 @@ void JointAccTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::SQUARED,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::SQUARED,
+                                       name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" cost
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::HINGE,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::HINGE,
+                                       name + "_j" + std::to_string(j))));
       }
     }
   }
@@ -1294,25 +1300,27 @@ void JointAccTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::EQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::EQ,
+                                             name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" constraint
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::INEQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::INEQ,
+                                             name + "_j" + std::to_string(j))));
       }
     }
   }
@@ -1476,25 +1484,27 @@ void JointJerkTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::SQUARED,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::SQUARED,
+                                       name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" cost
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
-        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::HINGE,
-            name + "_j" + std::to_string(j))));
+        prob.addCost(sco::Cost::Ptr(
+            new TrajOptCostFromErrFunc(sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(
+                                           targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                       sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+                                       joint_vars_vec,
+                                       util::toVectorXd(single_jnt_coeffs),
+                                       sco::HINGE,
+                                       name + "_j" + std::to_string(j))));
       }
     }
   }
@@ -1512,25 +1522,27 @@ void JointJerkTermInfo::hatch(TrajOptProb& prob)
       if (is_upper_zeros && is_lower_zeros)
       {
         DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::EQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::EQ,
+                                             name + "_j" + std::to_string(j))));
       }
       // Otherwise it's a hinged "inequality" constraint
       else
       {
         DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
-        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
-            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
-            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
-            joint_vars_vec,
-            util::toVectorXd(single_jnt_coeffs),
-            sco::INEQ,
-            name + "_j" + std::to_string(j))));
+        prob.addConstraint(sco::Constraint::Ptr(
+            new TrajOptConstraintFromErrFunc(sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(
+                                                 targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+                                             sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+                                             joint_vars_vec,
+                                             util::toVectorXd(single_jnt_coeffs),
+                                             sco::INEQ,
+                                             name + "_j" + std::to_string(j))));
       }
     }
   }

@@ -287,9 +287,8 @@ MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const
 {
   const int num_vals = static_cast<int>(var_vals.rows());
   const int half = num_vals / 2;
-  const int num_jerks = half-3;
+  const int num_jerks = half - 3;
   MatrixXd jac = MatrixXd::Zero(num_jerks * 2, num_vals);
-
 
   for (int i = 0; i < num_jerks; i++)
   {
@@ -307,7 +306,9 @@ MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const
     jac(i, i + 3) = dt3 * dt3 * dt3;
     jac(i, i + half + 1) = dt2 * dt3 * (x1 - x0);
     jac(i, i + half + 2) = dt3 * (dt1 * (x1 - x0) - 2 * dt2 * (x2 - x1) + dt3 * (x1 - x2));
-    jac(i, i + half + 3) = -dt2 * (-dt1 * (-x0 + x1) + dt2 * (-x1 + x2)) + dt3 * (-dt2 * (-x1 + x2) + dt3 * (-x2 + x3)) + dt3 * (-dt2 * (-x1 + x2) + 2 * dt3 * (-x2 + x3));
+    jac(i, i + half + 3) = -dt2 * (-dt1 * (-x0 + x1) + dt2 * (-x1 + x2)) +
+                           dt3 * (-dt2 * (-x1 + x2) + dt3 * (-x2 + x3)) +
+                           dt3 * (-dt2 * (-x1 + x2) + 2 * dt3 * (-x2 + x3));
   }
 
   return jac;
@@ -320,7 +321,7 @@ Eigen::VectorXd FixedDtDiff(const VectorXd& var_vals, double dt)
   const int num_diff = static_cast<int>(var_vals.rows()) - 1;
   const auto x2 = var_vals.segment(1, num_diff);
   const auto x1 = var_vals.segment(0, num_diff);
-  return (x2 - x1)/dt;
+  return (x2 - x1) / dt;
 }
 
 Eigen::VectorXd FixedDtErr(const VectorXd& vals, double target, double upper_tol, double lower_tol)
@@ -395,7 +396,7 @@ VectorXd JointJerkErrCalculatorFixedDt::operator()(const VectorXd& var_vals) con
 MatrixXd JointJerkJacCalculatorFixedDt::operator()(const VectorXd& var_vals) const
 {
   const int num_vals = static_cast<int>(var_vals.rows());
-  const int num_jerks = num_vals-3;
+  const int num_jerks = num_vals - 3;
   MatrixXd jac = MatrixXd::Zero(num_jerks * 2, num_vals);
 
   const double dt_cb = dt_ * dt_ * dt_;
