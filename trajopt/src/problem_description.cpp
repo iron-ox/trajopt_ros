@@ -17,6 +17,9 @@ TRAJOPT_IGNORE_WARNINGS_POP
 #include <trajopt_utils/logging.hpp>
 #include <trajopt_utils/vector_ops.hpp>
 
+// TODO Refactor into config
+constexpr double kFixedDt = 0.08;
+
 namespace
 {
 bool gRegisteredMakers = false;
@@ -1026,44 +1029,74 @@ void JointVelTermInfo::hatch(TrajOptProb& prob)
   }
   else if ((term_type & TT_COST) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cost is set. Otherwise it's a hinged "inequality" cost
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_vels = static_cast<unsigned>(last_step - first_step);
+
+    // Apply seperate cost to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addCost(sco::Cost::Ptr(
-          new JointVelEqCost(joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getCosts().back()->setName(name);
-    }
-    else
-    {
-      prob.addCost(sco::Cost::Ptr(new JointVelIneqCost(joint_vars,
-                                                       util::toVectorXd(coeffs),
-                                                       util::toVectorXd(targets),
-                                                       util::toVectorXd(upper_tols),
-                                                       util::toVectorXd(lower_tols),
-                                                       first_step,
-                                                       last_step)));
-      prob.getCosts().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, static_cast<int>(j), last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cost is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::SQUARED,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" cost
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::HINGE,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else if ((term_type & TT_CNT) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cnt is set. Otherwise it's an inequality constraint
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_vels = static_cast<unsigned>(last_step - first_step);
+
+    // Apply seperate cnt to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addConstraint(sco::Constraint::Ptr(new JointVelEqConstraint(
-          joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getConstraints().back()->setName(name);
-    }
-    else
-    {
-      prob.addConstraint(sco::Constraint::Ptr(new JointVelIneqConstraint(joint_vars,
-                                                                         util::toVectorXd(coeffs),
-                                                                         util::toVectorXd(targets),
-                                                                         util::toVectorXd(upper_tols),
-                                                                         util::toVectorXd(lower_tols),
-                                                                         first_step,
-                                                                         last_step)));
-      prob.getConstraints().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, static_cast<int>(j), last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cnt is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::EQ,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" constraint
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_vels * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointVelErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointVelJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::INEQ,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else
@@ -1213,44 +1246,74 @@ void JointAccTermInfo::hatch(TrajOptProb& prob)
   }
   else if ((term_type & TT_COST) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cost is set. Otherwise it's a hinged "inequality" cost
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_accs = static_cast<unsigned>(last_step - first_step - 1);
+
+    // Apply seperate cost to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addCost(sco::Cost::Ptr(
-          new JointAccEqCost(joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getCosts().back()->setName(name);
-    }
-    else
-    {
-      prob.addCost(sco::Cost::Ptr(new JointAccIneqCost(joint_vars,
-                                                       util::toVectorXd(coeffs),
-                                                       util::toVectorXd(targets),
-                                                       util::toVectorXd(upper_tols),
-                                                       util::toVectorXd(lower_tols),
-                                                       first_step,
-                                                       last_step)));
-      prob.getCosts().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, j, last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cost is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::SQUARED,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" cost
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::HINGE,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else if ((term_type & TT_CNT) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cnt is set. Otherwise it's an inequality constraint
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_accs = static_cast<unsigned>(last_step - first_step - 1);
+
+    // Apply seperate cnt to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addConstraint(sco::Constraint::Ptr(new JointAccEqConstraint(
-          joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getConstraints().back()->setName(name);
-    }
-    else
-    {
-      prob.addConstraint(sco::Constraint::Ptr(new JointAccIneqConstraint(joint_vars,
-                                                                         util::toVectorXd(coeffs),
-                                                                         util::toVectorXd(targets),
-                                                                         util::toVectorXd(upper_tols),
-                                                                         util::toVectorXd(lower_tols),
-                                                                         first_step,
-                                                                         last_step)));
-      prob.getConstraints().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, j, last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cnt is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::EQ,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" constraint
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_accs * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointAccErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointAccJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::INEQ,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else
@@ -1401,44 +1464,74 @@ void JointJerkTermInfo::hatch(TrajOptProb& prob)
   }
   else if ((term_type & TT_COST) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cost is set. Otherwise it's a hinged "inequality" cost
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_jerks = static_cast<unsigned>(last_step - first_step - 2);
+
+    // Apply seperate cost to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addCost(sco::Cost::Ptr(
-          new JointJerkEqCost(joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getCosts().back()->setName(name);
-    }
-    else
-    {
-      prob.addCost(sco::Cost::Ptr(new JointJerkIneqCost(joint_vars,
-                                                        util::toVectorXd(coeffs),
-                                                        util::toVectorXd(targets),
-                                                        util::toVectorXd(upper_tols),
-                                                        util::toVectorXd(lower_tols),
-                                                        first_step,
-                                                        last_step)));
-      prob.getCosts().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, j, last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cost is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::SQUARED,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" cost
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
+        prob.addCost(sco::Cost::Ptr(new TrajOptCostFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::HINGE,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else if ((term_type & TT_CNT) && ~(term_type | ~TT_USE_TIME))
   {
-    // If the tolerances are 0, an equality cnt is set. Otherwise it's an inequality constraint
-    if (is_upper_zeros && is_lower_zeros)
+    unsigned num_jerks = static_cast<unsigned>(last_step - first_step - 2);
+
+    // Apply seperate cnt to each joint b/c that is how the error function is currently written
+    for (size_t j = 0; j < n_dof; j++)
     {
-      prob.addConstraint(sco::Constraint::Ptr(new JointJerkEqConstraint(
-          joint_vars, util::toVectorXd(coeffs), util::toVectorXd(targets), first_step, last_step)));
-      prob.getConstraints().back()->setName(name);
-    }
-    else
-    {
-      prob.addConstraint(sco::Constraint::Ptr(new JointJerkIneqConstraint(joint_vars,
-                                                                          util::toVectorXd(coeffs),
-                                                                          util::toVectorXd(targets),
-                                                                          util::toVectorXd(upper_tols),
-                                                                          util::toVectorXd(lower_tols),
-                                                                          first_step,
-                                                                          last_step)));
-      prob.getConstraints().back()->setName(name);
+      // Get a vector of a single column of vars
+      sco::VarVector joint_vars_vec = joint_vars.cblock(first_step, j, last_step - first_step + 1);
+
+      // If the tolerances are 0, an equality cnt is set
+      if (is_upper_zeros && is_lower_zeros)
+      {
+        DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::EQ,
+            name + "_j" + std::to_string(j))));
+      }
+      // Otherwise it's a hinged "inequality" constraint
+      else
+      {
+        DblVec single_jnt_coeffs = DblVec(num_jerks * 2, coeffs[j]);
+        prob.addConstraint(sco::Constraint::Ptr(new TrajOptConstraintFromErrFunc(
+            sco::VectorOfVector::Ptr(new JointJerkErrCalculatorFixedDt(targets[j], upper_tols[j], lower_tols[j], kFixedDt)),
+            sco::MatrixOfVector::Ptr(new JointJerkJacCalculatorFixedDt(kFixedDt)),
+            joint_vars_vec,
+            util::toVectorXd(single_jnt_coeffs),
+            sco::INEQ,
+            name + "_j" + std::to_string(j))));
+      }
     }
   }
   else

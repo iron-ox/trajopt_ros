@@ -219,6 +219,80 @@ struct JointJerkJacCalculator : sco::MatrixOfVector
   Eigen::MatrixXd operator()(const Eigen::VectorXd& var_vals) const override;
 };
 
+struct JointVelErrCalculatorFixedDt : sco::VectorOfVector
+{
+  /** @brief Velocity target */
+  double target_;
+  /** @brief Upper tolerance */
+  double upper_tol_;
+  /** @brief Lower tolerance */
+  double lower_tol_;
+  double dt_;
+  JointVelErrCalculatorFixedDt() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), dt_(1.0) {}
+  JointVelErrCalculatorFixedDt(double target, double upper_tol, double lower_tol, double dt)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), dt_(dt)
+  {
+  }
+  Eigen::VectorXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
+struct JointVelJacCalculatorFixedDt : sco::MatrixOfVector
+{
+  double dt_;
+  JointVelJacCalculatorFixedDt(double dt) : dt_(dt) {}
+  Eigen::MatrixXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
+struct JointAccErrCalculatorFixedDt : sco::VectorOfVector
+{
+  /** @brief Velocity target */
+  double target_;
+  /** @brief Upper tolerance */
+  double upper_tol_;
+  /** @brief Lower tolerance */
+  double lower_tol_;
+  double dt_;
+  JointAccErrCalculatorFixedDt() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), dt_(1.0) {}
+  JointAccErrCalculatorFixedDt(double target, double upper_tol, double lower_tol, double dt)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), dt_(dt)
+  {
+  }
+
+  Eigen::VectorXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
+struct JointAccJacCalculatorFixedDt : sco::MatrixOfVector
+{
+  double dt_;
+  JointAccJacCalculatorFixedDt(double dt) : dt_(dt) {}
+  Eigen::MatrixXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
+struct JointJerkErrCalculatorFixedDt : sco::VectorOfVector
+{
+  /** @brief Velocity target */
+  double target_;
+  /** @brief Upper tolerance */
+  double upper_tol_;
+  /** @brief Lower tolerance */
+  double lower_tol_;
+  double dt_;
+  JointJerkErrCalculatorFixedDt() : target_(0.0), upper_tol_(0.0), lower_tol_(0.0), dt_(1.0) {}
+  JointJerkErrCalculatorFixedDt(double target, double upper_tol, double lower_tol, double dt)
+    : target_(target), upper_tol_(upper_tol), lower_tol_(lower_tol), dt_(dt)
+  {
+  }
+
+  Eigen::VectorXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
+struct JointJerkJacCalculatorFixedDt : sco::MatrixOfVector
+{
+  double dt_;
+  JointJerkJacCalculatorFixedDt(double dt) : dt_(dt) {}
+  Eigen::MatrixXd operator()(const Eigen::VectorXd& var_vals) const override;
+};
+
 struct TimeCostCalculator : sco::VectorOfVector
 {
   /** @brief The time target (s). This is subtracted from the cost, so only set limit!=0 if the penalty type is a hinge

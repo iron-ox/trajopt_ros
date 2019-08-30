@@ -1,3 +1,5 @@
+#include <csignal>
+
 #include <trajopt_utils/macros.h>
 TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <boost/format.hpp>
@@ -13,6 +15,8 @@ TRAJOPT_IGNORE_WARNINGS_POP
 #include <trajopt_utils/logging.hpp>
 #include <trajopt_utils/macros.h>
 #include <trajopt_utils/stl_to_string.hpp>
+
+#define DEBUG(x) std::cout << #x << ": " << x << "\n"
 
 namespace sco
 {
@@ -319,7 +323,7 @@ OptStatus BasicTrustRegionSQP::optimize()
       //   cout << cost_names[i] << " " << new_cost_vals[i] -
       //   results_.cost_vals[i] << endl;
       // }
-
+      
       std::vector<ConvexObjective::Ptr> cost_models = convexifyCosts(prob_->getCosts(), results_.x, model_.get());
       std::vector<ConvexConstraints::Ptr> cnt_models = convexifyConstraints(constraints, results_.x, model_.get());
       std::vector<ConvexObjective::Ptr> cnt_cost_models =
@@ -393,6 +397,13 @@ OptStatus BasicTrustRegionSQP::optimize()
         double approx_merit_improve = old_merit - model_merit;
         double exact_merit_improve = old_merit - new_merit;
         double merit_improve_ratio = exact_merit_improve / approx_merit_improve;
+
+        DEBUG(old_merit);
+        DEBUG(model_merit);
+        DEBUG(new_merit);
+        DEBUG(approx_merit_improve);
+        DEBUG(exact_merit_improve);
+        DEBUG(merit_improve_ratio);
 
         if (util::GetLogLevel() >= util::LevelInfo)
         {

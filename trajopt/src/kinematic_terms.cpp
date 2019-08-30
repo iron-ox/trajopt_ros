@@ -1,4 +1,4 @@
-#(include <trajopt_utils/macros.h>
+#include <trajopt_utils/macros.h>
 TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <Eigen/Geometry>
 #include <boost/format.hpp>
@@ -174,7 +174,7 @@ VectorXd CartVelErrCalculator::operator()(const VectorXd& dof_vals) const
 
 namespace
 {
-Eigen::VectorXd Diff(const VectorXd& var_vals)
+Eigen::VectorXd VarDtDiff(const VectorXd& var_vals)
 {
   // (x1-x0)*(1/dt)
   assert(var_vals.rows() % 2 == 0);
@@ -192,7 +192,7 @@ Eigen::VectorXd Diff(const VectorXd& var_vals)
   return result;
 }
 
-Eigen::VectorXd Err(const VectorXd& vals_and_dts, double target, double upper_tol, double lower_tol)
+Eigen::VectorXd VarDtErr(const VectorXd& vals_and_dts, double target, double upper_tol, double lower_tol)
 {
   assert(vals_and_dts.rows() % 2 == 0);
   const int half = static_cast<int>(vals_and_dts.rows()) / 2;
@@ -209,8 +209,8 @@ Eigen::VectorXd Err(const VectorXd& vals_and_dts, double target, double upper_to
 
 Eigen::VectorXd JointVelErrCalculator::operator()(const VectorXd& var_vals) const
 {
-  const VectorXd vel = Diff(var_vals);
-  return Err(vel, target_, upper_tol_, lower_tol_);
+  const VectorXd vel = VarDtDiff(var_vals);
+  return VarDtErr(vel, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointVelJacCalculator::operator()(const VectorXd& var_vals) const
@@ -244,9 +244,9 @@ MatrixXd JointVelJacCalculator::operator()(const VectorXd& var_vals) const
 // TODO: convert to (1/dt) and use central finite difference method
 VectorXd JointAccErrCalculator::operator()(const VectorXd& var_vals) const
 {
-  const VectorXd vel = Diff(var_vals);
-  const VectorXd acc = Diff(vel);
-  return Err(acc, target_, upper_tol_, lower_tol_);
+  const VectorXd vel = VarDtDiff(var_vals);
+  const VectorXd acc = VarDtDiff(vel);
+  return VarDtErr(acc, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
@@ -277,10 +277,10 @@ MatrixXd JointAccJacCalculator::operator()(const VectorXd& var_vals) const
 // TODO: convert to (1/dt) and use central finite difference method
 VectorXd JointJerkErrCalculator::operator()(const VectorXd& var_vals) const
 {
-  const VectorXd vel = Diff(var_vals);
-  const VectorXd acc = Diff(vel);
-  const VectorXd jerk = Diff(acc);
-  return Err(jerk, target_, upper_tol_, lower_tol_);
+  const VectorXd vel = VarDtDiff(var_vals);
+  const VectorXd acc = VarDtDiff(vel);
+  const VectorXd jerk = VarDtDiff(acc);
+  return VarDtErr(jerk, target_, upper_tol_, lower_tol_);
 }
 
 MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const
@@ -308,6 +308,104 @@ MatrixXd JointJerkJacCalculator::operator()(const VectorXd& var_vals) const
     jac(i, i + half + 1) = dt2 * dt3 * (x1 - x0);
     jac(i, i + half + 2) = dt3 * (dt1 * (x1 - x0) - 2 * dt2 * (x2 - x1) + dt3 * (x1 - x2));
     jac(i, i + half + 3) = -dt2 * (-dt1 * (-x0 + x1) + dt2 * (-x1 + x2)) + dt3 * (-dt2 * (-x1 + x2) + dt3 * (-x2 + x3)) + dt3 * (-dt2 * (-x1 + x2) + 2 * dt3 * (-x2 + x3));
+  }
+
+  return jac;
+}
+
+namespace
+{
+Eigen::VectorXd FixedDtDiff(const VectorXd& var_vals, double dt)
+{
+  const int num_diff = static_cast<int>(var_vals.rows()) - 1;
+  const auto x2 = var_vals.segment(1, num_diff);
+  const auto x1 = var_vals.segment(0, num_diff);
+  return (x2 - x1)/dt;
+}
+
+Eigen::VectorXd FixedDtErr(const VectorXd& vals, double target, double upper_tol, double lower_tol)
+{
+  // Note that for equality terms tols are 0, so error is effectively doubled
+  VectorXd result(vals.rows() * 2);
+  result.topRows(vals.rows()) = -(upper_tol - (vals.array() - target));
+  result.bottomRows(vals.rows()) = lower_tol - (vals.array() - target);
+
+  return result;
+}
+}  // namespace
+
+Eigen::VectorXd JointVelErrCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const VectorXd vel = FixedDtDiff(var_vals, dt_);
+  return FixedDtErr(vel, target_, upper_tol_, lower_tol_);
+}
+
+MatrixXd JointVelJacCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int num_vels = num_vals - 1;
+  MatrixXd jac = MatrixXd::Zero(num_vels * 2, num_vals);
+
+  for (int i = 0; i < num_vels; i++)
+  {
+    jac(i, i) = -1.0 * dt_;
+    jac(i, i + 1) = 1.0 * dt_;
+    // All others are 0
+  }
+
+  // bottom half is negative velocities
+  jac.bottomRows(num_vels) = -jac.topRows(num_vels);
+
+  return jac;
+}
+
+VectorXd JointAccErrCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const VectorXd vel = FixedDtDiff(var_vals, dt_);
+  const VectorXd acc = FixedDtDiff(vel, dt_);
+  return FixedDtErr(acc, target_, upper_tol_, lower_tol_);
+}
+
+MatrixXd JointAccJacCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int num_accs = num_vals - 2;
+  MatrixXd jac = MatrixXd::Zero(num_accs * 2, num_vals);
+
+  const double dt_sq = dt_ * dt_;
+
+  for (int i = 0; i < num_accs; i++)
+  {
+    jac(i, i) = dt_sq;
+    jac(i, i + 1) = -2.0 * dt_sq;
+    jac(i, i + 2) = dt_sq;
+  }
+
+  return jac;
+}
+
+VectorXd JointJerkErrCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const VectorXd vel = FixedDtDiff(var_vals, dt_);
+  const VectorXd acc = FixedDtDiff(vel, dt_);
+  const VectorXd jerk = FixedDtDiff(acc, dt_);
+  return FixedDtErr(jerk, target_, upper_tol_, lower_tol_);
+}
+
+MatrixXd JointJerkJacCalculatorFixedDt::operator()(const VectorXd& var_vals) const
+{
+  const int num_vals = static_cast<int>(var_vals.rows());
+  const int num_jerks = num_vals-3;
+  MatrixXd jac = MatrixXd::Zero(num_jerks * 2, num_vals);
+
+  const double dt_cb = dt_ * dt_ * dt_;
+
+  for (int i = 0; i < num_jerks; i++)
+  {
+    jac(i, i) = -dt_cb;
+    jac(i, i + 1) = 3.0 * dt_cb;
+    jac(i, i + 2) = -3.0 * dt_cb;
+    jac(i, i + 3) = dt_cb;
   }
 
   return jac;
