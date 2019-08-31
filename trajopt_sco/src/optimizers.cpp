@@ -323,7 +323,7 @@ OptStatus BasicTrustRegionSQP::optimize()
       //   cout << cost_names[i] << " " << new_cost_vals[i] -
       //   results_.cost_vals[i] << endl;
       // }
-      
+
       std::vector<ConvexObjective::Ptr> cost_models = convexifyCosts(prob_->getCosts(), results_.x, model_.get());
       std::vector<ConvexConstraints::Ptr> cnt_models = convexifyConstraints(constraints, results_.x, model_.get());
       std::vector<ConvexObjective::Ptr> cnt_cost_models =
